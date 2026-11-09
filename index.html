@@ -227,4 +227,46 @@ applyVisibility=function(){
 render=function(){renderBeforeHourBars();drawEmployeeHourBars();applyVisibility()};
 document.querySelector('.monthnote').textContent='Gelb: Sonder 06–14 unten und Stundenbalken. Schwarz: Nacht 18–06 / 22–06 sowie 18–22. Violett: Urlaub. Nacht Lang teilt sich werktags automatisch.';
 render();
-</script><style>.schedule.month .shift.late,.light .schedule.month .shift.late{background:#69c9f5!important;color:#07314c!important;border-color:#288bc1!important}</style></body></html>
+</script><style>.schedule.month .shift.late,.light .schedule.month .shift.late{background:#69c9f5!important;color:#07314c!important;border-color:#288bc1!important}</style>
+<style>
+/* Untere Felder ausschließlich an Doppelbesetzungstagen oder bei vorhandener Nachtaufteilung. */
+.schedule.month tr.secondary td.lower-concealed,.light .schedule.month tr.secondary td.lower-concealed{
+ background:transparent!important;border-right-color:transparent!important;
+}
+.schedule.month td.lower-concealed select.shift{visibility:hidden!important;pointer-events:none!important}
+.schedule.month tr.secondary .shift:disabled{opacity:1!important;cursor:default!important}
+.schedule.month tr.secondary .shift.nightshort:disabled{border-style:solid!important}
+</style>
+<script>
+// Montag und Freitag sind derzeit die regulären Tage der Doppelbesetzung.
+// An allen anderen Tagen bleibt die untere Zelle unsichtbar, solange sie leer ist.
+// Bereits gespeicherte Dienste bleiben sichtbar und werden nicht gelöscht.
+const beforeConditionalExtra=render;
+selection=function(value,i,j,row){
+ const chosen=kinds.find(t=>t.id===value)||kinds[0];
+ const allowed=kinds.filter(t=>{
+  if(row==='extra')return t.id==='empty'||t.id==='special'||t.id===value;
+  return (t.id!=='special'||value==='special')&&(t.id!=='evening'||value==='evening');
+ });
+ const options=allowed.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${shortCodes[t.id]}</option>`).join('');
+ const title=chosen.id==='nightlong'?'18–06: werktags automatisch 18–22 oben und 22–06 unten':chosen.name;
+ return `<select title="${title}" class="shift ${value}" data-person="${i}" data-day="${j}" data-row="${row}" aria-label="Schicht ${chosen.name} für Mitarbeiter ${i+1}, Tag ${j+1}">${options}</select>`;
+};
+function updateSecondaryVisibility(){
+ const start=currentMonth();
+ document.querySelectorAll('#roster tr.secondary').forEach(tr=>{
+  tr.querySelectorAll('select.shift[data-row="extra"]').forEach(select=>{
+   const day=new Date(start.getFullYear(),start.getMonth(),Number(select.dataset.day)+1);
+   const doubleDay=day.getDay()===1||day.getDay()===5;
+   const hasShift=select.value!=='empty';
+   const cell=select.closest('td');
+   cell.classList.toggle('lower-concealed',!doubleDay&&!hasShift);
+   // Eine aus 18–06 entstandene Nacht Kurz ist kein separat auszuwählender Sonderdienst.
+   select.disabled=select.value==='nightshort';
+  });
+ });
+}
+render=function(){beforeConditionalExtra();updateSecondaryVisibility()};
+document.querySelector('.monthnote').textContent='Untere Zeile: Montag und Freitag Sonder 06–14 wählbar. Sonst nur sichtbar bei Nachtaufteilung oder vorhandenen Diensten. 18–06 teilt sich werktags weiterhin automatisch.';
+render();
+</script></body></html>
