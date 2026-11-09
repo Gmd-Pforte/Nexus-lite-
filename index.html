@@ -271,50 +271,54 @@ document.querySelector('.monthnote').textContent='Untere Zeile: Montag und Freit
 render();
 </script>
 <style>
-/* Datum über jedem Mitarbeiterblock, wie im Excel-Dienstplan. */
+/* Wiederholte Datumszeilen entsprechen optisch der originalen Tabellenkopfzeile. */
 .schedule.month tr.employee-dates th,.light .schedule.month tr.employee-dates th{
- background:#d8e8f2!important;color:#17394e!important;border-bottom:2px solid #83a7bd!important;
- height:31px!important;min-height:31px!important;padding:2px 0!important;
- text-align:center!important;font-size:9px!important;font-weight:800!important;
+ height:55px!important;min-height:55px!important;padding:6px!important;
+ background:#172a3a!important;color:#a9bfd0!important;
+ border-right:1px solid #263848!important;border-bottom:1px solid #263848!important;
+ text-align:center!important;font-size:inherit!important;font-weight:inherit!important;
 }
-.schedule.month tr.employee-dates th strong{display:block;font-size:11px;font-weight:950}
-.schedule.month tr.employee-dates th.sunday,.light .schedule.month tr.employee-dates th.sunday{
- background:#efb632!important;color:#3f2906!important;
+.schedule.month tr.employee-dates th span{display:block!important;font-size:18px!important;color:#eaf5fb!important;font-weight:inherit!important}
+.schedule.month tr.employee-dates th.who,.schedule.month tr.employee-dates th.hours{
+ background:#152636!important;text-align:left!important;
 }
-.schedule.month tr.employee-dates th.holiday,.light .schedule.month tr.employee-dates th.holiday{
- background:#efb632!important;color:#3f2906!important;
-}
-.schedule.month tr.employee-dates th.date-label,.light .schedule.month tr.employee-dates th.date-label{
- background:#bcd4e3!important;text-align:left!important;padding-left:6px!important;
-}
-.schedule.month tr.employee-dates th.end-label{background:#bcd4e3!important}
-@media(max-width:850px){.schedule.month tr.employee-dates th{font-size:7px!important;height:26px!important}.schedule.month tr.employee-dates th strong{font-size:9px!important}}
+.schedule.month tr.employee-dates th.hours{text-align:center!important}
+.light .schedule.month tr.employee-dates th{background:#e2eef5!important;color:#59798c!important;border-color:#bdced9!important}
+.light .schedule.month tr.employee-dates th span{color:#263e4d!important}
+.light .schedule.month tr.employee-dates th.who,.light .schedule.month tr.employee-dates th.hours{background:#e9f2f7!important}
+.schedule.month tr.employee-dates th.weekend-day{background:#243246!important}
+.light .schedule.month tr.employee-dates th.weekend-day{background:#e7edf3!important}
+.schedule.month tr.employee-dates th.holiday-day{background:#3d314b!important}
+.schedule.month tr.employee-dates th.holiday-day span{color:#ffc6e1!important}
+.light .schedule.month tr.employee-dates th.holiday-day{background:#ffe6ef!important}
+.light .schedule.month tr.employee-dates th.holiday-day span,.light .schedule.month tr.employee-dates th.holiday-day em{color:#96385f!important}
 </style>
 <script>
 const renderBeforeEmployeeDates=render;
 function addEmployeeDateHeaders(){
- const first=currentMonth(),days=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+ const original=document.getElementById('days');
+ if(!original)return;
  const blocks=Array.from(document.querySelectorAll('#roster tr.hours-divider'));
- blocks.forEach(bar=>{
+ blocks.forEach((bar,index)=>{
+  // Direkt über Mitarbeiter 1 steht bereits die globale Datumszeile.
+  if(index===0)return;
   const main=bar.previousElementSibling?.previousElementSibling;
   if(!main)return;
-  const row=document.createElement('tr');row.className='employee-dates';
-  let html='<th class="date-label" scope="row">DATUM</th>';
-  for(let day=1;day<=days;day++){
-   const date=new Date(first.getFullYear(),first.getMonth(),day);
-   const holiday=holidayNRW(date),sunday=date.getDay()===0;
-   const weekday=['So','Mo','Di','Mi','Do','Fr','Sa'][date.getDay()];
-   html+=`<th scope="col" class="${holiday?'holiday':sunday?'sunday':''}" title="${esc(holiday||'')}">${weekday}<strong>${String(day).padStart(2,'0')}</strong></th>`;
-  }
-  html+='<th class="end-label">STD.</th>';
-  row.innerHTML=html;
+  const row=original.cloneNode(true);
+  row.removeAttribute('id');
+  row.className='employee-dates';
   main.before(row);
  });
 }
 applyVisibility=function(){
  countSelect.value=String(visibleCount);
- const groupSize=document.querySelector('#roster .employee-dates')?4:document.querySelector('#roster .hours-divider')?3:2;
- document.querySelectorAll('#roster tr').forEach((tr,index)=>tr.hidden=Math.floor(index/groupSize)>=visibleCount);
+ const rows=Array.from(document.querySelectorAll('#roster tr'));
+ const hasDividers=rows.some(row=>row.classList.contains('hours-divider'));
+ let personIndex=0;
+ rows.forEach((row,index)=>{
+  row.hidden=(hasDividers?personIndex:Math.floor(index/2))>=visibleCount;
+  if(hasDividers&&row.classList.contains('hours-divider'))personIndex++;
+ });
  localStorage.setItem(VISIBLE_KEY,String(visibleCount));
 };
 render=function(){renderBeforeEmployeeDates();addEmployeeDateHeaders();applyVisibility()};
