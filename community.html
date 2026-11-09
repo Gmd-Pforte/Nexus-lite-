@@ -9,4 +9,8 @@ const scheduleLink=document.createElement('a');scheduleLink.href='./index.html';
 const railSchedule=document.querySelectorAll('.railbtn')[2];railSchedule.title='Zum Dienstplan';railSchedule.onclick=()=>location.href='./index.html';
 const railCommunity=document.querySelectorAll('.railbtn')[1];railCommunity.title='Community';
 const detail=document.createElement('small');detail.className='community-tag';detail.textContent='DEMO · Beiträge werden noch nicht online gespeichert';document.querySelector('.side').append(detail);
+</script>
+<script>
+function returnToPlan(event){if(window.parent!==window){event?.preventDefault();window.parent.postMessage({type:'nexus-go-schedule'},location.origin)}}
+scheduleLink.addEventListener('click',returnToPlan);railSchedule.onclick=(event)=>{if(window.parent!==window)returnToPlan(event);else location.href='./index.html'};
 </script></body></html>
