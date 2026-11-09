@@ -70,4 +70,10 @@ render=function(){renderWithCards();document.querySelector('.schedule.month').st
 document.querySelector('.intro p').textContent='Der ganze Monat in einer kompakten Tabelle · Haupt- und Sonderbesetzung';
 document.querySelector('.monthnote').textContent='Kürzel: TL Tag lang · F Früh · S Sonder · SP Spät · A Abend · NL Nacht lang · NK Nacht kurz · U Urlaub · K Krank · X Frei.';
 render();
+</script>
+<style>.schedule.month .shift{font-size:7.5px!important;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0!important}.schedule.month th:not(.who):not(.hours),.schedule.month td:not(.person):not(.total){padding:1px!important}@media(max-width:850px){.schedule.month .shift{font-size:7px!important}}</style>
+<script>
+Object.assign(shortCodes,{day:'06–18',early:'06–14',special:'06–14',late:'14–22',evening:'18–22',nightlong:'18–06',nightshort:'22–06',vacation:'Urlaub',sick:'Krank',free:'Frei'});
+document.querySelector('.monthnote').textContent='In den Feldern stehen die Schichtzeiten. Grün: Tag / Früh / Sonder · Gelb: Spät / Abend · Lila: Nacht · Blau: Urlaub · Rot: Krank.';
+render();
 </script></body></html>
