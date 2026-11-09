@@ -132,8 +132,8 @@ document.querySelector('.monthnote').textContent='Gelb: Doppelbesetzung/Sonder 0
 render();
 </script>
 <script>
-// Auf neuen Geräten alle Mitarbeiter zeigen; ausdrücklich gespeicherte Auswahl beibehalten.
-if(localStorage.getItem(VISIBLE_KEY)===null){visibleCount=10;applyVisibility();render()}
+// Einmalige Korrektur auch für Browser, die die alte Voreinstellung 0 gespeichert haben.
+if(localStorage.getItem('nexus-lite-visible-fix-v1')!=='yes'){visibleCount=10;applyVisibility();localStorage.setItem('nexus-lite-visible-fix-v1','yes');render()}
 const refreshButton=document.createElement('button');refreshButton.type='button';refreshButton.textContent='↻ Daten aktualisieren';refreshButton.title='Namen und Schichten erneut aus Supabase laden';document.querySelector('.intro .buttons').prepend(refreshButton);
 refreshButton.onclick=async()=>{if(!pinToken){alert('Bitte zuerst den gemeinsamen PIN eingeben.');return}refreshButton.disabled=true;refreshButton.textContent='Lade Daten …';try{const result=await pinRequest('load');applyRemote(result);document.getElementById('pinSync').textContent='✓ Daten aktualisiert'}catch(e){document.getElementById('pinSync').textContent='⚠ '+e.message}finally{refreshButton.disabled=false;refreshButton.textContent='↻ Daten aktualisieren'}};
 </script></body></html>
