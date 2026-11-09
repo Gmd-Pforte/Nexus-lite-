@@ -269,4 +269,54 @@ function updateSecondaryVisibility(){
 render=function(){beforeConditionalExtra();updateSecondaryVisibility()};
 document.querySelector('.monthnote').textContent='Untere Zeile: Montag und Freitag Sonder 06–14 wählbar. Sonst nur sichtbar bei Nachtaufteilung oder vorhandenen Diensten. 18–06 teilt sich werktags weiterhin automatisch.';
 render();
+</script>
+<style>
+/* Datum über jedem Mitarbeiterblock, wie im Excel-Dienstplan. */
+.schedule.month tr.employee-dates th,.light .schedule.month tr.employee-dates th{
+ background:#d8e8f2!important;color:#17394e!important;border-bottom:2px solid #83a7bd!important;
+ height:31px!important;min-height:31px!important;padding:2px 0!important;
+ text-align:center!important;font-size:9px!important;font-weight:800!important;
+}
+.schedule.month tr.employee-dates th strong{display:block;font-size:11px;font-weight:950}
+.schedule.month tr.employee-dates th.sunday,.light .schedule.month tr.employee-dates th.sunday{
+ background:#efb632!important;color:#3f2906!important;
+}
+.schedule.month tr.employee-dates th.holiday,.light .schedule.month tr.employee-dates th.holiday{
+ background:#efb632!important;color:#3f2906!important;
+}
+.schedule.month tr.employee-dates th.date-label,.light .schedule.month tr.employee-dates th.date-label{
+ background:#bcd4e3!important;text-align:left!important;padding-left:6px!important;
+}
+.schedule.month tr.employee-dates th.end-label{background:#bcd4e3!important}
+@media(max-width:850px){.schedule.month tr.employee-dates th{font-size:7px!important;height:26px!important}.schedule.month tr.employee-dates th strong{font-size:9px!important}}
+</style>
+<script>
+const renderBeforeEmployeeDates=render;
+function addEmployeeDateHeaders(){
+ const first=currentMonth(),days=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+ const blocks=Array.from(document.querySelectorAll('#roster tr.hours-divider'));
+ blocks.forEach(bar=>{
+  const main=bar.previousElementSibling?.previousElementSibling;
+  if(!main)return;
+  const row=document.createElement('tr');row.className='employee-dates';
+  let html='<th class="date-label" scope="row">DATUM</th>';
+  for(let day=1;day<=days;day++){
+   const date=new Date(first.getFullYear(),first.getMonth(),day);
+   const holiday=holidayNRW(date),sunday=date.getDay()===0;
+   const weekday=['So','Mo','Di','Mi','Do','Fr','Sa'][date.getDay()];
+   html+=`<th scope="col" class="${holiday?'holiday':sunday?'sunday':''}" title="${esc(holiday||'')}">${weekday}<strong>${String(day).padStart(2,'0')}</strong></th>`;
+  }
+  html+='<th class="end-label">STD.</th>';
+  row.innerHTML=html;
+  main.before(row);
+ });
+}
+applyVisibility=function(){
+ countSelect.value=String(visibleCount);
+ const groupSize=document.querySelector('#roster .employee-dates')?4:document.querySelector('#roster .hours-divider')?3:2;
+ document.querySelectorAll('#roster tr').forEach((tr,index)=>tr.hidden=Math.floor(index/groupSize)>=visibleCount);
+ localStorage.setItem(VISIBLE_KEY,String(visibleCount));
+};
+render=function(){renderBeforeEmployeeDates();addEmployeeDateHeaders();applyVisibility()};
+render();
 </script></body></html>
