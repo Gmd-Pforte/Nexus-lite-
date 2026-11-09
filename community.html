@@ -13,4 +13,17 @@ const detail=document.createElement('small');detail.className='community-tag';de
 <script>
 function returnToPlan(event){if(window.parent!==window){event?.preventDefault();window.parent.postMessage({type:'nexus-go-schedule'},location.origin)}}
 scheduleLink.addEventListener('click',returnToPlan);railSchedule.onclick=(event)=>{if(window.parent!==window)returnToPlan(event);else location.href='./index.html'};
+</script>
+<style>
+.handover-banner{background:linear-gradient(115deg,#1d6559,#17384b);border:1px solid #34786d;color:#f3fcff;border-radius:15px;padding:20px 23px;margin:0 0 22px}.handover-banner small{display:block;color:#a5e6d5;letter-spacing:.12em;font-weight:800;font-size:10px;margin-bottom:8px}.handover-banner h3{font-size:23px;margin:0 0 7px}.handover-banner p{font-size:12px;color:#c4e3df;margin:0;line-height:1.6}.post-heading-field{display:block;margin:2px 0 11px;color:#a9bfd0;font-size:12px;font-weight:800}.post-heading-field input{width:100%;background:#0e1c29;color:#fff;border:1px solid #426075;border-radius:10px;padding:13px;margin-top:7px;font:700 15px system-ui}.sidecard{display:none}
+</style>
+<script>
+channelInfo.splice(0,channelInfo.length,['uebergaben','Übergaben','Wichtige Informationen für die nächste Schicht','📋']);selected='uebergaben';
+posts=posts.filter(p=>p.channel==='uebergaben');posts[0].title='Übergabe Frühdienst';
+document.querySelector('.grouphead').innerHTML='KANAL';
+const banner=document.createElement('section');banner.className='handover-banner';banner.innerHTML='<small>PFORTE NEXUS · TEAM-KANAL</small><h3>📋 Übergaben</h3><p>Alles, was die nächste Schicht wissen muss – klar, vollständig und mit einer Überschrift.</p>';document.querySelector('.composer').before(banner);
+const headingLabel=document.createElement('label');headingLabel.className='post-heading-field';headingLabel.innerHTML='Überschrift der Übergabe<input id="handoverHeading" maxlength="120" placeholder="z. B. Übergabe Spätdienst · 09.11.2026">';document.getElementById('editor').prepend(headingLabel);
+document.getElementById('openEditor').textContent='＋ Neue Übergabe mit Überschrift schreiben …';
+document.getElementById('sendPost').onclick=()=>{const title=document.getElementById('handoverHeading').value.trim(),body=document.getElementById('postText').value.trim();if(!title){document.getElementById('handoverHeading').focus();return}if(!body){document.getElementById('postText').focus();return}posts.unshift({id:Date.now(),channel:'uebergaben',author:'Du',initial:'DU',tone:'green',when:'Gerade eben',title,body,announce:false,likes:0,comments:[]});document.getElementById('handoverHeading').value='';document.getElementById('postText').value='';document.getElementById('editor').classList.remove('open');renderPosts()};
+render();
 </script></body></html>
