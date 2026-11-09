@@ -7,7 +7,7 @@ let state;try{state=JSON.parse(localStorage.getItem(KEY))}catch{}if(!state||!Arr
 </script>
 <style>.employee-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.employee-controls .visible-label{color:#9ab5c4;font-size:12px;font-weight:750}.light .employee-controls .visible-label{color:#557386}.employee-controls select{border-radius:9px;padding:10px;background:#172939;color:#e8f4fa;border:1px solid #3a5567}.light .employee-controls select{background:#fff;color:#29485c;border-color:#b9cbd8}.schedule tr[hidden]{display:none!important}</style>
 <script>
-const VISIBLE_KEY='pforte-nexus-visible-employees';let visibleCount=Number(localStorage.getItem(VISIBLE_KEY));if(!Number.isInteger(visibleCount)||visibleCount<0||visibleCount>10)visibleCount=0;
+const VISIBLE_KEY='pforte-nexus-visible-employees';let visibleCount=localStorage.getItem(VISIBLE_KEY)===null?10:Number(localStorage.getItem(VISIBLE_KEY));if(!Number.isInteger(visibleCount)||visibleCount<0||visibleCount>10)visibleCount=10;
 const control=document.createElement('div');control.className='employee-controls';control.innerHTML='<span class="visible-label">Mitarbeiter anzeigen:</span><select id="visibleCount" aria-label="Anzahl sichtbarer Mitarbeiter"></select><button id="showAll">Alle 10</button>';
 const countSelect=control.querySelector('select');for(let n=0;n<=10;n++){const option=document.createElement('option');option.value=n;option.textContent=n===0?'Alle ausgeblendet':`${n} von 10`;countSelect.append(option)}
 document.querySelector('.toolbar').append(control);
@@ -130,4 +130,10 @@ try{const previous=JSON.parse(sessionStorage.getItem(PIN_SESSION_KEY));if(previo
 selection=function(value,i,j,row){const date=new Date(currentMonth().getFullYear(),currentMonth().getMonth(),j+1),split=!specialDay(date),selected=kinds.find(t=>t.id===value)||kinds[0];const options=kinds.map(t=>{const label=t.id==='nightlong'&&split?'↔':shortCodes[t.id];const title=t.id==='nightlong'&&split?'Nacht automatisch aufteilen: 18–22 und 22–06':t.name;return `<option value="${t.id}" ${value===t.id?'selected':''} title="${title}">${label}</option>`}).join('');return `<select title="${selected.id==='nightlong'&&split?'Nacht teilen 18–22 + 22–06':selected.name}" class="shift ${value}" data-person="${i}" data-day="${j}" data-row="${row}" aria-label="Schicht ${selected.name} für Mitarbeiter ${i+1}, Tag ${j+1}">${options}</select>`};
 document.querySelector('.monthnote').textContent='Gelb: Doppelbesetzung/Sonder 06–14 sowie Abend 18–22. ↔ teilt werktags die Nacht automatisch in 18–22 und 22–06. Nacht Lang 18–06 gilt an Wochenenden und NRW-Feiertagen.';
 render();
+</script>
+<script>
+// Auf neuen Geräten alle Mitarbeiter zeigen; ausdrücklich gespeicherte Auswahl beibehalten.
+if(localStorage.getItem(VISIBLE_KEY)===null){visibleCount=10;applyVisibility();render()}
+const refreshButton=document.createElement('button');refreshButton.type='button';refreshButton.textContent='↻ Daten aktualisieren';refreshButton.title='Namen und Schichten erneut aus Supabase laden';document.querySelector('.intro .buttons').prepend(refreshButton);
+refreshButton.onclick=async()=>{if(!pinToken){alert('Bitte zuerst den gemeinsamen PIN eingeben.');return}refreshButton.disabled=true;refreshButton.textContent='Lade Daten …';try{const result=await pinRequest('load');applyRemote(result);document.getElementById('pinSync').textContent='✓ Daten aktualisiert'}catch(e){document.getElementById('pinSync').textContent='⚠ '+e.message}finally{refreshButton.disabled=false;refreshButton.textContent='↻ Daten aktualisieren'}};
 </script></body></html>
