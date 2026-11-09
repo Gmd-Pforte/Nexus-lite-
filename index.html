@@ -167,7 +167,64 @@ menuButton.onclick=()=>toggleDrawer(true);backdrop.onclick=()=>toggleDrawer(fals
 <div class="community-topbar"><button id="communityMenuButton" type="button">☰ Menü</button><strong>PFORTE NEXUS · Community</strong><button id="backToPlan" type="button">▦ Dienstplan</button></div><iframe id="communityFrame" class="nexus-community-frame" title="Nexus Community" loading="lazy"></iframe>
 <script>
 const communityFrame=document.getElementById('communityFrame');let communityLoaded=false;function showNexusArea(area){const community=area==='community';if(community&&!document.body.classList.contains('pin-ok'))return;if(community&&!communityLoaded){communityFrame.src='./community.html?v=ohne-infospalte-20261109';communityLoaded=true}document.body.classList.toggle('community-mode',community);toggleDrawer(false);history.replaceState(null,'',community?'#community':'#dienstplan')}
-const drawerLinks=document.querySelectorAll('.drawer-link');drawerLinks.forEach(a=>a.addEventListener('click',event=>{event.preventDefault();showNexusArea(a.getAttribute('href').includes('community')?'community':'dienstplan')}));document.getElementById('backToPlan').onclick=()=>showNexusArea('dienstplan');document.getElementById('communityMenuButton').onclick=()=>toggleDrawer(true);
+const drawerLinks=document.querySelectorAll('.drawer-link');drawerLinks.forEach(a=>a.addEventListener('click',event=>{if(a.getAttribute('href').includes('mitarbeiter'))return;event.preventDefault();showNexusArea(a.getAttribute('href').includes('community')?'community':'dienstplan')}));document.getElementById('backToPlan').onclick=()=>showNexusArea('dienstplan');document.getElementById('communityMenuButton').onclick=()=>toggleDrawer(true);
 window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='nexus-go-schedule')showNexusArea('dienstplan')});
 const previousPinOpen=openPinSession;openPinSession=async function(){await previousPinOpen();if(location.hash==='#community')showNexusArea('community')};
+</script>
+<style>
+/* Klare Schichtfarben nach dem Excel-Dienstplan. */
+.schedule.month .shift.nightlong,.schedule.month .shift.nightshort,.schedule.month .shift.evening,
+.light .schedule.month .shift.nightlong,.light .schedule.month .shift.nightshort,.light .schedule.month .shift.evening{
+ background:#101317!important;color:#fff!important;border-color:#101317!important;
+}
+.schedule.month .shift.vacation,.light .schedule.month .shift.vacation{
+ background:#7133ac!important;color:#fff!important;border-color:#512480!important;
+}
+.schedule.month .shift.special,.light .schedule.month .shift.special{
+ background:#efb632!important;color:#302005!important;border-color:#ad7c11!important;
+}
+.schedule.month tr.hours-divider td,.light .schedule.month tr.hours-divider td{
+ background:#f2d31c!important;color:#242000!important;border-top:2px solid #bb9e00!important;
+ border-bottom:3px solid #8e7800!important;text-align:center!important;font-size:12px!important;
+ font-weight:950!important;letter-spacing:.04em!important;padding:4px 7px!important;height:25px!important;
+}
+.schedule.month tr.hours-divider{height:25px!important}
+.schedule.month tr.hours-divider strong{font-weight:950}
+.schedule.month tr.secondary td{border-bottom-width:1px!important}
+</style>
+<script>
+// Die Sonder-Frühschicht 06–14 ist ausschließlich in der unteren Besetzungszeile wählbar.
+// Die Nacht 18–06 bleibt als Auslöser erhalten und wird werktags weiterhin automatisch geteilt.
+selection=function(value,i,j,row){
+ const chosen=kinds.find(t=>t.id===value)||kinds[0];
+ const options=kinds.filter(t=>(t.id!=='evening'||value==='evening')&&(t.id!=='special'||row==='extra'||value==='special'))
+ .map(t=>`<option value="${t.id}" ${value===t.id?'selected':''}>${shortCodes[t.id]}</option>`).join('');
+ return `<select title="${chosen.id==='nightlong'?'18–06: werktags automatisch 18–22 oben und 22–06 unten':chosen.name}" class="shift ${value}" data-person="${i}" data-day="${j}" data-row="${row}" aria-label="Schicht ${chosen.name} für Mitarbeiter ${i+1}, Tag ${j+1}">${options}</select>`;
+};
+const renderBeforeHourBars=render;
+function drawEmployeeHourBars(){
+ const start=currentMonth(),n=new Date(start.getFullYear(),start.getMonth()+1,0).getDate();
+ const roster=document.getElementById('roster');
+ const pairs=Array.from(roster.querySelectorAll('tr.secondary'));
+ pairs.forEach((second,i)=>{
+  let sum=0;
+  for(let d=1;d<=n;d++)for(const row of ['main','extra']){
+   const entry=kinds.find(x=>x.id===monthValue(new Date(start.getFullYear(),start.getMonth(),d),i,row));
+   sum+=entry?.hours||0;
+  }
+  const tr=document.createElement('tr');tr.className='hours-divider';
+  const td=document.createElement('td');td.colSpan=n+2;
+  td.innerHTML='<strong>'+sum+' Stunden</strong>';
+  tr.append(td);second.after(tr);
+ });
+}
+applyVisibility=function(){
+ countSelect.value=String(visibleCount);
+ const withBar=Boolean(document.querySelector('#roster .hours-divider'));
+ document.querySelectorAll('#roster tr').forEach((tr,index)=>tr.hidden=Math.floor(index/(withBar?3:2))>=visibleCount);
+ localStorage.setItem(VISIBLE_KEY,String(visibleCount));
+};
+render=function(){renderBeforeHourBars();drawEmployeeHourBars();applyVisibility()};
+document.querySelector('.monthnote').textContent='Gelb: Sonder 06–14 unten und Stundenbalken. Schwarz: Nacht 18–06 / 22–06 sowie 18–22. Violett: Urlaub. Nacht Lang teilt sich werktags automatisch.';
+render();
 </script></body></html>
