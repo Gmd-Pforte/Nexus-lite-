@@ -308,6 +308,8 @@ function addEmployeeDateHeaders(){
   const row=original.cloneNode(true);
   row.removeAttribute('id');
   row.className='employee-dates';
+  const label=row.querySelector('th.who');
+  if(label)label.textContent='';
   main.before(row);
  });
 }
