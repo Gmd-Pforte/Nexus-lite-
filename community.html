@@ -77,4 +77,16 @@ editorButton.textContent='＋ Neue Übergabe schreiben …';document.querySelect
 document.querySelector('.community-tag').textContent='Übergaben werden zentral über Supabase gespeichert';document.querySelector('.disclaimer').textContent='Übergaben werden über die gemeinsame PIN-Sitzung geschützt und zentral gespeichert.';
 loadSharedHandovers();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!document.getElementById('editor').classList.contains('open'))loadSharedHandovers()});
+</script>
+<style>
+/* Übergaben erhalten die volle verfügbare Breite statt der alten Demo-Infospalte. */
+.app{grid-template-columns:68px 260px minmax(0,1fr)}
+.right{display:none!important}
+.feed{padding-left:clamp(18px,2.5vw,38px);padding-right:clamp(18px,2.5vw,38px)}
+@media(max-width:1200px){.app{grid-template-columns:58px 210px minmax(0,1fr)}}
+@media(max-width:700px){.app{grid-template-columns:58px minmax(0,1fr)}}
+</style>
+<script>
+document.querySelector('.right')?.remove();
+document.querySelector('.feed-head .badge')?.remove();
 </script></body></html>
