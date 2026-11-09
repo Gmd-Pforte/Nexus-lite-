@@ -97,4 +97,12 @@ async function nexusLoggedIn(){document.body.classList.add('nexus-authenticated'
 document.getElementById('nexusAuthForm').onsubmit=async event=>{event.preventDefault();authMessage('Anmeldung läuft …');const button=document.getElementById('nexusLoginButton');button.disabled=true;try{const email=document.getElementById('nexusEmail').value,password=document.getElementById('nexusPassword').value;nexusSession=await authFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});nexusSession.expires_at=Math.floor(Date.now()/1000)+nexusSession.expires_in;localStorage.setItem(NEXUS_SESSION_KEY,JSON.stringify(nexusSession));document.getElementById('nexusPassword').value='';await nexusLoggedIn()}catch(e){authMessage(e.message)}finally{button.disabled=false}};
 document.getElementById('nexusLogout').onclick=()=>{nexusSession=null;clearInterval(nexusTimer);localStorage.removeItem(NEXUS_SESSION_KEY);document.body.classList.remove('nexus-authenticated');document.getElementById('nexusLogin').hidden=false;authMessage('Abgemeldet')};
 try{nexusSession=JSON.parse(localStorage.getItem(NEXUS_SESSION_KEY))}catch{}if(nexusSession){ensureNexusSession().then(nexusLoggedIn).catch(()=>{nexusSession=null;localStorage.removeItem(NEXUS_SESSION_KEY);authMessage('Bitte anmelden')})}
+</script>
+<style>#nexusLogin,.nexus-session{display:none!important}body .app{display:block!important}</style>
+<script>
+// Öffentlicher Modus ohne Login: geschützte Supabase-Schreibzugriffe bleiben deaktiviert.
+nexusSession=null;clearInterval(nexusTimer);localStorage.removeItem(NEXUS_SESSION_KEY);
+document.body.classList.add('nexus-authenticated');document.getElementById('nexusLogin').remove();sessionControls.remove();
+document.querySelector('.intro p').textContent='Monatsdienstplan ohne Anmeldung · Eingaben werden vorerst auf diesem Gerät gespeichert';
+document.querySelector('.foot').textContent='Ohne Anmeldung ist die zentrale Supabase-Speicherung geschützt und nicht beschreibbar. Änderungen werden derzeit nur in diesem Browser gespeichert. Für geräteübergreifende Änderungen benötigen wir eine sichere Alternative.';
 </script></body></html>
