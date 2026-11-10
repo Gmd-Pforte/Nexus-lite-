@@ -89,4 +89,38 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!document
 <script>
 document.querySelector('.right')?.remove();
 document.querySelector('.feed-head .badge')?.remove();
+</script><style>
+.post-delete{border:1px solid #82404a!important;background:#43262d!important;color:#ffe9e9!important;padding:8px 11px!important;border-radius:10px!important;font-weight:800;cursor:pointer}
+.post-delete:hover{background:#65303a!important}
+.post-delete:disabled{opacity:.5;cursor:wait}
+body.theme-light .post-delete{background:#fff0f0!important;color:#9a2635!important;border-color:#d9a7ad!important}
+body.theme-light .post-delete:hover{background:#ffe0e2!important}
+</style>
+<script>
+const beforeDeleteRenderPosts=renderPosts;
+renderPosts=function(){
+ beforeDeleteRenderPosts();
+ const visible=posts.filter(p=>p.channel===selected);
+ document.querySelectorAll('#posts article.post').forEach((article,i)=>{
+  const post=visible[i];if(!post||!Number.isSafeInteger(Number(post.id)))return;
+  const actions=article.querySelector('.post-actions')||article.querySelector('.post-head');
+  if(!actions)return;
+  const btn=document.createElement('button');
+  btn.type='button';btn.className='post-delete';btn.textContent='🗑 Löschen';
+  btn.setAttribute('aria-label','Übergabe löschen');
+  actions.append(btn);
+  btn.onclick=async()=>{
+   const preview=String(post.body||'').slice(0,80);
+   if(!confirm('Diese Übergabe wirklich dauerhaft löschen?\\n\\n'+preview+'\\n\\nDer Beitrag verschwindet auch bei deinen Kollegen.'))return;
+   btn.disabled=true;handoverStatus('Übergabe wird gelöscht …');
+   try{
+    await handoverRequest('delete_handover',{id:Number(post.id)});
+    if(editingPostId===post.id)resetHandoverEditor();
+    await loadSharedHandovers();
+    handoverStatus('✓ Übergabe dauerhaft gelöscht.');
+   }catch(err){handoverStatus('⚠ Nicht gelöscht: '+err.message,true);btn.disabled=false}
+  };
+ });
+};
+renderPosts();
 </script></body></html>
