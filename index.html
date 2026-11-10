@@ -133,7 +133,7 @@ render();
 </script>
 <script>
 // Einmalige Korrektur auch für Browser, die die alte Voreinstellung 0 gespeichert haben.
-if(localStorage.getItem('nexus-lite-visible-fix-v1')!=='yes'){visibleCount=10;applyVisibility();localStorage.setItem('nexus-lite-visible-fix-v1','yes');render()}
+// Frühere Einmal-Korrektur deaktiviert: Sichtbarkeit wird jetzt in Einstellungen gespeichert.
 const refreshButton=document.createElement('button');refreshButton.type='button';refreshButton.textContent='↻ Daten aktualisieren';refreshButton.title='Namen und Schichten erneut aus Supabase laden';document.querySelector('.intro .buttons').prepend(refreshButton);
 refreshButton.onclick=async()=>{if(!pinToken){alert('Bitte zuerst den gemeinsamen PIN eingeben.');return}refreshButton.disabled=true;refreshButton.textContent='Lade Daten …';try{const result=await pinRequest('load');applyRemote(result);document.getElementById('pinSync').textContent='✓ Daten aktualisiert'}catch(e){document.getElementById('pinSync').textContent='⚠ '+e.message}finally{refreshButton.disabled=false;refreshButton.textContent='↻ Daten aktualisieren'}};
 </script>
@@ -325,5 +325,83 @@ applyVisibility=function(){
  localStorage.setItem(VISIBLE_KEY,String(visibleCount));
 };
 render=function(){renderBeforeEmployeeDates();addEmployeeDateHeaders();applyVisibility()};
+render();
+</script><style>
+/* Einstellungen für Dienstplan, Darstellung und Freigaben */
+.nexus-settings-toggle{font-weight:850;border:1px solid #3b6479;background:#203849;color:#f0f8ff}
+.light .nexus-settings-toggle{background:#e4f2f9;color:#173c52;border-color:#a8c8da}
+.nexus-settings-panel{margin:0 0 18px;padding:20px;border:1px solid #39576a;border-radius:17px;background:#122635;box-shadow:0 10px 28px #0002}
+.light .nexus-settings-panel{background:#fff;border-color:#c2d6e3;color:#183c51}
+.nexus-settings-panel[hidden]{display:none!important}
+.nexus-settings-panel h2{font-size:21px;margin:0 0 8px}
+.nexus-settings-panel h3{font-size:15px;margin:0 0 10px}
+.nexus-settings-panel p{color:#91b0c0;margin:0 0 12px;line-height:1.5}
+.light .nexus-settings-panel p{color:#57798c}
+.nexus-settings-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.nexus-settings-section{border:1px solid #385265;border-radius:12px;padding:15px;min-width:0}
+.light .nexus-settings-section{border-color:#c4d5df}
+.nexus-settings-list{display:grid;gap:5px;max-height:340px;overflow:auto}
+.nexus-settings-person{display:flex;align-items:center;gap:11px;padding:9px 7px;border-radius:8px;background:#1c3444;cursor:pointer}
+.light .nexus-settings-person{background:#eef5f9}
+.nexus-settings-person input{width:18px;height:18px;accent-color:#009979;flex:none}
+.nexus-settings-person span{font-weight:700;overflow-wrap:anywhere}
+.nexus-settings-section .buttons{display:flex;align-items:start;gap:8px}
+.nexus-settings-section .buttons button{min-height:42px}
+.employee-controls{display:none!important}
+@media(max-width:600px){.nexus-settings-panel{padding:13px}.nexus-settings-sections{grid-template-columns:1fr}}
+</style>
+<script>
+/* Zehn unabhängig freischaltbare Mitarbeiter: lokale Voreinstellung bleibt beim Neustart bestehen. */
+const NEXUS_ENABLED_KEY='nexus-lite-enabled-employees-v1';
+function readNexusEnabled(){
+ try{
+  const parsed=JSON.parse(localStorage.getItem(NEXUS_ENABLED_KEY)||'null');
+  if(Array.isArray(parsed))return new Set(parsed.filter(n=>Number.isInteger(n)&&n>=0&&n<10));
+ }catch{}
+ return new Set([0,1,2,3,4]);
+}
+let nexusEnabled=readNexusEnabled();
+const settingsButton=document.createElement('button');
+settingsButton.id='nexusSettingsButton';settingsButton.type='button';
+settingsButton.className='nexus-settings-toggle';settingsButton.textContent='⚙ Einstellungen';
+document.querySelector('.head .buttons').append(settingsButton);
+const settingsPanel=document.createElement('section');
+settingsPanel.id='nexusSettingsPanel';settingsPanel.className='nexus-settings-panel';settingsPanel.hidden=true;
+settingsPanel.innerHTML='<h2>⚙ Einstellungen</h2><div class="nexus-settings-sections">'+
+ '<div class="nexus-settings-section"><h3>👥 Mitarbeiter freigeben</h3><p>Nur aktivierte Mitarbeiter werden im Dienstplan angezeigt. Deine Auswahl bleibt beim nächsten Öffnen erhalten.</p><div class="nexus-settings-list" id="nexusEmployeeList"></div></div>'+
+ '<div class="nexus-settings-section"><h3>🎨 Aussehen</h3><p>Das zuletzt gewählte helle oder dunkle Design bleibt gespeichert.</p><div class="buttons" id="nexusAppearanceButtons"></div></div>'+
+ '<div class="nexus-settings-section"><h3>🛠 Weitere Funktionen</h3><p>Drucken, Sicherung und Planverwaltung.</p><div class="buttons" id="nexusToolButtons"></div></div>'+
+ '</div>';
+document.querySelector('.intro').after(settingsPanel);
+settingsButton.onclick=()=>{settingsPanel.hidden=!settingsPanel.hidden;settingsButton.setAttribute('aria-expanded',String(!settingsPanel.hidden));if(!settingsPanel.hidden)updateNexusEmployeeList()};
+settingsButton.setAttribute('aria-controls','nexusSettingsPanel');settingsButton.setAttribute('aria-expanded','false');
+document.getElementById('nexusAppearanceButtons').append(document.getElementById('theme'));
+for(const id of ['print','export','reset'])document.getElementById('nexusToolButtons').append(document.getElementById(id));
+function updateNexusEmployeeList(){
+ const names=Array.from(document.querySelectorAll('#roster input[data-name]')).map(el=>el.value.trim());
+ const container=document.getElementById('nexusEmployeeList');
+ container.innerHTML=Array.from({length:10},(_,i)=>{
+  const label=names[i]||'Mitarbeiter '+(i+1);
+  return '<label class="nexus-settings-person"><input type="checkbox" data-toggle-person="'+i+'" '+(nexusEnabled.has(i)?'checked':'')+'><span>'+(i+1)+'. '+esc(label)+'</span></label>';
+ }).join('');
+ container.querySelectorAll('[data-toggle-person]').forEach(box=>box.onchange=()=>{
+  const index=Number(box.dataset.togglePerson);
+  if(box.checked)nexusEnabled.add(index);else nexusEnabled.delete(index);
+  localStorage.setItem(NEXUS_ENABLED_KEY,JSON.stringify([...nexusEnabled].sort((a,b)=>a-b)));
+  applyVisibility();
+ });
+}
+applyVisibility=function(){
+ const rows=Array.from(document.querySelectorAll('#roster tr'));
+ let employee=0;
+ const hasBars=rows.some(r=>r.classList.contains('hours-divider'));
+ rows.forEach((row,index)=>{
+  const target=hasBars?employee:Math.floor(index/2);
+  row.hidden=!nexusEnabled.has(target);
+  if(hasBars&&row.classList.contains('hours-divider'))employee++;
+ });
+};
+const beforeSettingsRender=render;
+render=function(){beforeSettingsRender();applyVisibility();if(!settingsPanel.hidden)updateNexusEmployeeList()};
 render();
 </script></body></html>
